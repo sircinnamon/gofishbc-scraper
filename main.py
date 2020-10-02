@@ -3,8 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime,timedelta
+import os
 
 HISTORY_FILE = "history.json"
+PUSHBULLET_CHANNEL = "gofishbc"
+BASE_URL = "https://www.gofishbc.com/Stocked-Fish/Detailed-Report.aspx?start={}&end={}"
+API_URL = "https://api.pushbullet.com/v2/pushes"
 
 def load_history():
 	f = open(HISTORY_FILE, "r")
@@ -21,7 +25,7 @@ def hash_evt(evt):
 	return hash(frozenset(evt.items()))
 
 def get_events(startdate, enddate):
-	url = "https://www.gofishbc.com/Stocked-Fish/Detailed-Report.aspx?start={}&end={}".format(startdate, enddate)
+	url = BASE_URL.format(startdate, enddate)
 	page = requests.get(url)
 
 	soup = BeautifulSoup(page.content, 'html.parser')
@@ -53,10 +57,12 @@ def filter_seen_events(evt_list, history):
 		return not hash_evt(x) in history[date]
 	return list(filter(filter_func, evt_list))
 
-def notify_events(evt_list):
-	for e in evt_list:
-		print(e)
-		print(hash_evt(e))
+def notify_events(evt_list, start, end):
+	# for e in evt_list:
+	# 	print(e)
+	# 	print(hash_evt(e))
+	if len(evt_list) == 0: return
+	create_pushbullet_notif(evt_list, start, end)
 
 def add_events_to_history(evt_list, history):
 	for e in evt_list:
@@ -68,6 +74,32 @@ def add_events_to_history(evt_list, history):
 def format_date(date):
 	return date.strftime("%Y/%m/%d")
 
+def create_pushbullet_notif(events, start, end):
+	push_data = {
+		"type": "link",
+		"url": BASE_URL.format(start, end),
+		"body": format_push_body(events),
+		"title": "New Fish Stocked!",
+		"channel_tag": PUSHBULLET_CHANNEL
+	}
+	access_token = os.environ["PB_ACCESS_TOKEN"]
+	api_url = API_URL
+	headers = {
+		"Content-Type":"application/json",
+		"Access-Token": access_token
+	}
+	res = requests.post(api_url, json=push_data, headers=headers)
+	if not res.ok:
+		print(res.status_code())
+		print(res.json())
+
+def format_push_body(events):
+ out = ""
+ for e in events:
+ 	line = "{} stocked in {}\n".format(e["species"].upper(), e["waterbody"])
+ 	out = out+line
+ return out
+
 
 enddate = format_date(datetime.now())
 startdate = format_date(datetime.now() - timedelta(7))
@@ -78,6 +110,7 @@ evts = get_events(startdate, enddate)
 print("{} total events found.".format(len(evts)))
 evts = filter_seen_events(evts, hst)
 print("{} unseen events found.".format(len(evts)))
-notify_events(evts)
-add_events_to_history(evts, hst)
-save_history(hst)
+success = notify_events(evts, startdate, enddate)
+if success:
+	add_events_to_history(evts, hst)
+	save_history(hst)
