@@ -1,0 +1,8 @@
+[Unit]
+Description=Scrape gofishbc on a timer
+
+[Timer]
+OnCalendar=*-*-* 9,12,15,18:00:00
+
+[Install]
+WantedBy=timers.target

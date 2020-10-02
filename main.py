@@ -6,6 +6,8 @@ from datetime import datetime,timedelta
 import os
 
 HISTORY_FILE = "history.json"
+if "GOFISH_HISTORY_FILE" in os.environ:
+	HISTORY_FILE = os.environ["GOFISH_HISTORY_FILE"]
 PUSHBULLET_CHANNEL = "gofishbc"
 BASE_URL = "https://www.gofishbc.com/Stocked-Fish/Detailed-Report.aspx?start={}&end={}"
 API_URL = "https://api.pushbullet.com/v2/pushes"
@@ -62,7 +64,7 @@ def notify_events(evt_list, start, end):
 	# 	print(e)
 	# 	print(hash_evt(e))
 	if len(evt_list) == 0: return
-	create_pushbullet_notif(evt_list, start, end)
+	return create_pushbullet_notif(evt_list, start, end)
 
 def add_events_to_history(evt_list, history):
 	for e in evt_list:
@@ -92,6 +94,7 @@ def create_pushbullet_notif(events, start, end):
 	if not res.ok:
 		print(res.status_code())
 		print(res.json())
+	return res.ok
 
 def format_push_body(events):
  out = ""

@@ -1,0 +1,7 @@
+[Unit]
+Description=Webscraper and notifier for gofishbc website
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/gofishbc-scraper/.env_vars
+ExecStart=/usr/bin/python3 /etc/gofishbc-scraper/main.py
