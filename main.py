@@ -47,8 +47,9 @@ def get_all_events(startdate, enddate, hst):
 		url = BASE_URL.format(startdate, enddate, urllib.parse.quote(region.upper()))
 		events = get_events(url)
 		events = filter_seen_events(events, hst)
-		all_events[region] = events
-		all_events["All"] = all_events["All"] + events
+		if(len(events)>0):
+			all_events[region] = events
+			all_events["All"] = all_events["All"] + events
 	return all_events
 
 def get_events(url):
@@ -120,7 +121,7 @@ def create_webpush_notif(events, start, end, region):
 			"data": {"clickUrl": click_url}
 		}
 	}
-	print(body)
+	# print(body)
 	res = requests.post(url, json=body, headers=headers)
 	if not res.ok:
 		print(res.status_code)
