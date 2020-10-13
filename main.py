@@ -11,7 +11,7 @@ if "GOFISH_HISTORY_FILE" in os.environ:
 PUSHBULLET_CHANNEL = "gofishbc"
 BASE_URL = "https://www.gofishbc.com/Stocked-Fish/Detailed-Report.aspx?start={}&end={}&region={}"
 API_URL = "https://api.pushbullet.com/v2/pushes"
-WEBPUSH_URL = "https://thor.sircinnamon.ca:10043"
+WEBPUSH_URL = "https://baldr.sircinnamon.ca/gofishbc"
 REGIONS = [
 	"Cariboo",
 	"East Kootenay",
@@ -113,6 +113,7 @@ def create_webpush_notif(events, start, end, region):
 	url = WEBPUSH_URL + "/notification"
 	title = "New Fish Stocked{}!".format("" if region=="All" else (" In {}".format(region)))
 	click_url = BASE_URL.format(start, end, urllib.parse.quote(region.upper()))
+	click_url = click_url.replace("&region=ALL", "") #ALL isnt a region
 	body = {
 		"type": t,
 		"content": {
